@@ -1,12 +1,22 @@
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 from auth.manager import fastapi_users
 from auth.models.schemas import UserRead, UserCreate
 from auth.service import auth_backend
+from config import settings
 from tournaments.service import tournament_router
 
 app = FastAPI(title="Office Tournament")
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/")
 async def root():
