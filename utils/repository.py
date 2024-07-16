@@ -82,20 +82,23 @@ class SQLALchemyRepository(AbstractRepository):
             await session.commit()
             return result.rowcount
 
-    async def find_one(self, record_id: int):
+    async def find_one(self, record_id):
         async with async_session_maker() as session:
-            query = select(self.model).where(self.model.id == record_id)
-            result = await session.execute(query)
-            return result.scalar_one()
+            try:
+                query = select(self.model).where(self.model.id == record_id)
+                result = await session.execute(query)
+                return result.scalar_one()
+            except:
+                return False
 
-    async def delete_one(self, record_id: int):
+    async def delete_one(self, record_id):
         async with async_session_maker() as session:
             stmt = delete(self.model).where(self.model.id == record_id)
             result = await session.execute(stmt)
             await session.commit()
             return result.rowcount
 
-    async def get_one(self, record_id: int):
+    async def get_one(self, record_id):
         async with async_session_maker() as session:
             try:
                 query = select(self.model).where(self.model.id == record_id)

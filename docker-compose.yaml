@@ -1,0 +1,36 @@
+version: "3.0"
+services:
+  db:
+    container_name: "db"
+    image: postgres:alpine3.18
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - custom
+
+  backend:
+    container_name: "backend"
+    build: .
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - custom
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "alembic upgrade head &&
+             gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+
+networks:
+  custom:
+    driver: bridge
+
+
