@@ -70,7 +70,7 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentSchema:
 @tournament_router.post("/{id}/enroll/{user_id}")
 async def enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
     """Участвовать в турнире"""
-    # TODO: check authentication
+    # TODO: check authorization
     tournament = await TournamentRepository().get_one(record_id=id)
     players_id = tournament.players_id or []
     if user_id in players_id:
