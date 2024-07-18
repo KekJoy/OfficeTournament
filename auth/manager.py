@@ -1,6 +1,7 @@
 import uuid
 from typing import Optional
 
+import jwt
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin, FastAPIUsers
 
@@ -16,6 +17,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
+        await UserManager.request_verify(self, user, request)
+        payload = {"email": user.email}
+        token = jwt.encode(payload, self.verification_token_secret)
         print(f"User {user.id} has registered.")
 
 

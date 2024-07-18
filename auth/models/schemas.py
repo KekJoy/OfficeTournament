@@ -29,3 +29,14 @@ class UserCreate(schemas.BaseUserCreate):
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
+
+
+class UserUpdate(schemas.BaseUserUpdate):
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    birthdate: Optional[datetime] = None
+    gender: Optional[str] = None
+    avatar_id: Optional[int] = None
+    is_active: Optional[bool] = True
+    is_superuser: Optional[bool] = False
+    is_verified: Optional[bool] = False
