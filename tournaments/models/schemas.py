@@ -29,3 +29,19 @@ class GetTournamentSchema(CreateTournamentSchema):
     id: UUID
     players_id: List[UUID] | None = None
     status: TournamentStatusENUM
+
+
+class TournamentFiltersSchema(BaseModel):
+    sport_id: Optional[UUID] | None = None
+    start_time_from: Optional[datetime] | None = None
+    start_time_to: Optional[datetime] | None = None
+    status: Optional[TournamentStatusENUM] | None = None
+    is_solo: Optional[bool] | None = None
+
+
+class CreateSportSchema(BaseModel):
+    name: str
+
+
+class GetSportSchema(CreateSportSchema):
+    id: UUID

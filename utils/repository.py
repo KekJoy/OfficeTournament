@@ -75,7 +75,7 @@ class SQLALchemyRepository(AbstractRepository):
 
             return data
 
-    async def update_one(self, record_id: int, data: dict):
+    async def update_one(self, record_id, data: dict):
         async with async_session_maker() as session:
             stmt = update(self.model).where(self.model.id == record_id).values(data)
             result = await session.execute(stmt)

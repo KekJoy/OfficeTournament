@@ -6,7 +6,8 @@ from auth.models.schemas import UserRead, UserCreate, UserUpdate
 from auth.service import auth_backend
 from auth.utils.user_router import get_users_router
 from config import settings
-from tournaments.service import tournament_router
+from tournaments.services.sport import sport_router
+from tournaments.services.tournament import tournament_router
 
 app = FastAPI(title="Office Tournament")
 
@@ -53,3 +54,4 @@ app.include_router(
 
 
 app.include_router(tournament_router, tags=['tournaments'])
+app.include_router(sport_router, tags=['sport'])

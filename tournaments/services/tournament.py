@@ -1,13 +1,10 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Query
 
 from auth.repository import UserRepository
-from database import get_async_session
-from tournaments.models.db import Tournament
-from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema
+from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 
 tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
@@ -33,13 +30,17 @@ async def create_tournament(tournament: CreateTournamentSchema) -> uuid.UUID:
     return result
 
 
-@tournament_router.get("/", response_model=List[GetTournamentSchema])
-async def get_all_tournaments(skip: int = 0, limit: int = 10) -> List[GetTournamentSchema]:
+@tournament_router.post("/filters", response_model=List[GetTournamentSchema])
+async def get_all_tournaments(filters: TournamentFiltersSchema,
+                              page: int = Query(ge=1, default=1),
+                              size: int = Query(ge=1, le=100)) -> List[GetTournamentSchema]:
     """Получить турниры"""
-    tournaments = await TournamentRepository().get_multiple(skip=skip, limit=limit)
+    offset_min = (page - 1) * size
+    offset_max = page * size
+
+    tournaments = await TournamentRepository().filter_tournaments(filters.model_dump())
     result = []
     for trnmt in tournaments:
-        print(trnmt)
         grid = await GridRepository().get_one(trnmt.grid)
         grid_type = grid.grid_type if grid else None
 
@@ -47,7 +48,7 @@ async def get_all_tournaments(skip: int = 0, limit: int = 10) -> List[GetTournam
         tournament_dict['grid_type'] = grid_type
         del tournament_dict['grid']
         result.append(GetTournamentSchema(**tournament_dict))
-    return result
+    return result[offset_min:offset_max]
 
 
 @tournament_router.get("/{id}", response_model=GetTournamentSchema)

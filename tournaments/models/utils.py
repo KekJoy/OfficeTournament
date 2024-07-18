@@ -13,4 +13,3 @@ class TournamentStatusENUM(enum.Enum):
 class GridTypeENUM(enum.Enum):
     CIRCLE = "CIRCLE"
     PLAYOFF = "PLAYOFF"
-    COMBINED = "COMBINED"
