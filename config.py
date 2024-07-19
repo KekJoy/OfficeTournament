@@ -17,5 +17,11 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env")
 
-
 settings = Settings()
+
+class AppSettings:
+    DEFAULT_GAME_COUNT = 3
+
+    DEFAULT_MAX_TEAMS_COUNT = 16
+
+app_settings = AppSettings()

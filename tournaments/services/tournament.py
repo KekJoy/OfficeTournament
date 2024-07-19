@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 from auth.repository import UserRepository
 from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
+from tournaments.models.utils import TournamentStatusENUM
 
 tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
 
@@ -82,3 +83,12 @@ async def enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
     players_id.append(user_id)
     await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
     return GetTournamentSchema(**tournament.__dict__)
+
+
+@tournament_router.get("/{id}/start")
+async def start_tournament(id: uuid.UUID) -> None:
+    """Начинает турнир"""
+    from grid_generator.services.start import start
+    tournament = await TournamentRepository().get_one(record_id=id)
+    TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
+    await start(tournament.__dict__)
