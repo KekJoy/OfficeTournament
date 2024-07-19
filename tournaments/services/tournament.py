@@ -65,3 +65,20 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentSchema:
     del tournament_dict['grid']
 
     return GetTournamentSchema(**tournament_dict)
+
+
+@tournament_router.post("/{id}/enroll/{user_id}")
+async def enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
+    """Участвовать в турнире"""
+    # TODO: check authorization
+    tournament = await TournamentRepository().get_one(record_id=id)
+    players_id = tournament.players_id or []
+    if user_id in players_id:
+        raise HTTPException(status_code=400, detail="The user is already enrolled.")
+    if len(players_id) >= tournament.teams_limit:
+        raise HTTPException(status_code=400, detail="The players limit has been reached.")
+    if not await UserRepository().find_one(record_id=user_id):
+        raise HTTPException(status_code=400, detail="User doesn't exist.")
+    players_id.append(user_id)
+    await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
+    return GetTournamentSchema(**tournament.__dict__)
