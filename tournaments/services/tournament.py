@@ -1,10 +1,11 @@
 import uuid
-from typing import List
+from typing import List, Dict
 
 from fastapi import APIRouter, HTTPException, Query
 
 from auth.repository import UserRepository
-from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema
+from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
+    TournamentResponse
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 
 tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
@@ -30,10 +31,10 @@ async def create_tournament(tournament: CreateTournamentSchema) -> uuid.UUID:
     return result
 
 
-@tournament_router.post("/filters", response_model=List[GetTournamentSchema])
+@tournament_router.post("/filters", response_model=TournamentResponse)
 async def get_all_tournaments(filters: TournamentFiltersSchema,
                               page: int = Query(ge=1, default=1),
-                              size: int = Query(ge=1, le=100)) -> List[GetTournamentSchema]:
+                              size: int = Query(ge=1, le=100)) -> TournamentResponse:
     """Получить турниры"""
     offset_min = (page - 1) * size
     offset_max = page * size
@@ -48,7 +49,9 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
         tournament_dict['grid_type'] = grid_type
         del tournament_dict['grid']
         result.append(GetTournamentSchema(**tournament_dict))
-    return result[offset_min:offset_max]
+
+    total_count = len(result)
+    return TournamentResponse(total_count=total_count, tournaments=result[offset_min:offset_max])
 
 
 @tournament_router.get("/{id}", response_model=GetTournamentSchema)

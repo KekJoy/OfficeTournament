@@ -31,11 +31,16 @@ class GetTournamentSchema(CreateTournamentSchema):
     status: TournamentStatusENUM
 
 
+class TournamentResponse(BaseModel):
+    total_count: int
+    tournaments: List[GetTournamentSchema]
+
+
 class TournamentFiltersSchema(BaseModel):
     sport_id: Optional[UUID] | None = None
     start_time_from: Optional[datetime] | None = None
     start_time_to: Optional[datetime] | None = None
-    status: Optional[TournamentStatusENUM] | None = None
+    status: Optional[List[TournamentStatusENUM]] | None = None
     is_solo: Optional[bool] | None = None
 
 
