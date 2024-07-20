@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from auth.repository import UserRepository
 from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
-    TournamentResponse
+    TournamentResponse, PatchTournamentSchema
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 
 tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
@@ -68,3 +68,35 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentSchema:
     del tournament_dict['grid']
 
     return GetTournamentSchema(**tournament_dict)
+
+
+@tournament_router.patch("/{id}")
+async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
+    """Редактирование турнира"""
+    tournament_repo = TournamentRepository()
+    sport_repo = SportRepository()
+
+    current_tournament = await tournament_repo.get_one(record_id=id)
+    if not current_tournament:
+        raise HTTPException(status_code=400, detail="The tournament with the transferred ID does not exist.")
+
+    if tournament.sport_id and not await sport_repo.find_one(record_id=tournament.sport_id):
+        raise HTTPException(status_code=400, detail="The sport with the transferred ID does not exist.")
+
+    if tournament.enroll_start_time or tournament.enroll_end_time or tournament.start_time:
+        enroll_start_time = tournament.enroll_start_time or current_tournament.enroll_start_time
+        enroll_end_time = tournament.enroll_end_time or current_tournament.enroll_end_time
+        start_time = tournament.start_time or current_tournament.start_time
+
+        if not enroll_start_time < enroll_end_time <= start_time:
+            raise HTTPException(status_code=400, detail="Incorrect time frame of the tournament is specified.")
+
+    update_data = tournament.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(current_tournament, key, value)
+
+    updated_tournament_data = {key: getattr(current_tournament, key) for key in update_data.keys()}
+
+    await tournament_repo.update_one(record_id=id, data=updated_tournament_data)
+    result = await tournament_repo.get_one(record_id=id)
+    return result
