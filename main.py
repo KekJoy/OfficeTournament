@@ -1,10 +1,7 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from auth.manager import fastapi_users
-from auth.models.schemas import UserRead, UserCreate, UserUpdate
-from auth.service import auth_backend
-from auth.utils.user_router import get_users_router
+from auth.service import auth_router
 from config import settings
 from tournaments.services.sport import sport_router
 from tournaments.services.tournament import tournament_router
@@ -24,34 +21,6 @@ app.add_middleware(
 async def root():
     return {"message": "Hello World"}
 
-
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix="/auth/jwt",
-    tags=["auth"],
-)
-
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix="/auth",
-    tags=["auth"],
-)
-
-app.include_router(
-    fastapi_users.get_verify_router(UserRead),
-    prefix="/auth",
-    tags=["auth"],
-)
-
-app.include_router(
-    get_users_router(get_user_manager=fastapi_users.get_user_manager,
-                     user_schema=UserRead,
-                     user_update_schema=UserUpdate,
-                     authenticator=fastapi_users.authenticator),
-    prefix="/users",
-    tags=["users"],
-)
-
-
+app.include_router(auth_router, tags=['auth'])
 app.include_router(tournament_router, tags=['tournaments'])
 app.include_router(sport_router, tags=['sport'])

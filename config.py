@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     SECRET: str
     VERIFY_TOKEN_SECRET: str
 
+    JWT_ACCESS_TTL: int
+    JWT_REFRESH_TTL: int
+
     ORIGINS: List[str] = []
 
     model_config = SettingsConfigDict(env_file=".env")
