@@ -33,4 +33,5 @@ class Game(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     match_id = mapped_column(ForeignKey(Match.id, ondelete='CASCADE', onupdate='CASCADE'), nullable=False)
+    game_number = Column(Integer, nullable=False)
     score = Column(ARRAY(Integer), nullable=False)
