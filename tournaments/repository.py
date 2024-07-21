@@ -33,7 +33,7 @@ class TournamentRepository(SQLALchemyRepository):
                 conditions.append(cast(self.model.start_time, Date) <= filters['start_time_to'])
 
             if 'status' in filters and filters['status'] is not None:
-                conditions.append(self.model.status == filters['status'])
+                conditions.append(self.model.status.in_(filters['status']))
 
             if 'is_solo' in filters:
                 if filters['is_solo'] is True:

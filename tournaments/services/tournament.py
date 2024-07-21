@@ -1,11 +1,11 @@
 import uuid
-from typing import List
+from typing import List, Dict
 
 from fastapi import APIRouter, HTTPException, Query
 
 from auth.repository import UserRepository
 from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
-    GetTournamentPageSchema, BriefUserSchema
+    GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 from tournaments.models.utils import TournamentStatusENUM
 
@@ -32,10 +32,10 @@ async def create_tournament(tournament: CreateTournamentSchema) -> uuid.UUID:
     return result
 
 
-@tournament_router.post("/filters", response_model=List[GetTournamentSchema])
+@tournament_router.post("/filters", response_model=TournamentResponse)
 async def get_all_tournaments(filters: TournamentFiltersSchema,
                               page: int = Query(ge=1, default=1),
-                              size: int = Query(ge=1, le=100)) -> List[GetTournamentSchema]:
+                              size: int = Query(ge=1, le=100)) -> TournamentResponse:
     """Получить турниры"""
     offset_min = (page - 1) * size
     offset_max = page * size
@@ -50,7 +50,9 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
         tournament_dict['grid_type'] = grid_type
         del tournament_dict['grid']
         result.append(GetTournamentSchema(**tournament_dict))
-    return result[offset_min:offset_max]
+
+    total_count = len(result)
+    return TournamentResponse(total_count=total_count, tournaments=result[offset_min:offset_max])
 
 
 @tournament_router.get("/{id}", response_model=GetTournamentPageSchema)
@@ -88,18 +90,33 @@ async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
     return users
 
 
-@tournament_router.post("/{id}/enroll/{user_id}")
-async def enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
-    """Участвовать в турнире"""
-    # TODO: check authorization
-    tournament = await TournamentRepository().get_one(record_id=id)
-    players_id = tournament.players_id or []
-    if user_id in players_id:
-        raise HTTPException(status_code=400, detail="The user is already enrolled.")
-    if len(players_id) >= tournament.teams_limit:
-        raise HTTPException(status_code=400, detail="The players limit has been reached.")
-    if not await UserRepository().find_one(record_id=user_id):
-        raise HTTPException(status_code=400, detail="User doesn't exist.")
-    players_id.append(user_id)
-    await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
-    return GetTournamentSchema(**tournament.__dict__)
+@tournament_router.patch("/{id}")
+async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
+    """Редактирование турнира"""
+    tournament_repo = TournamentRepository()
+    sport_repo = SportRepository()
+
+    current_tournament = await tournament_repo.get_one(record_id=id)
+    if not current_tournament:
+        raise HTTPException(status_code=400, detail="The tournament with the transferred ID does not exist.")
+
+    if tournament.sport_id and not await sport_repo.find_one(record_id=tournament.sport_id):
+        raise HTTPException(status_code=400, detail="The sport with the transferred ID does not exist.")
+
+    if tournament.enroll_start_time or tournament.enroll_end_time or tournament.start_time:
+        enroll_start_time = tournament.enroll_start_time or current_tournament.enroll_start_time
+        enroll_end_time = tournament.enroll_end_time or current_tournament.enroll_end_time
+        start_time = tournament.start_time or current_tournament.start_time
+
+        if not enroll_start_time < enroll_end_time <= start_time:
+            raise HTTPException(status_code=400, detail="Incorrect time frame of the tournament is specified.")
+
+    update_data = tournament.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(current_tournament, key, value)
+
+    updated_tournament_data = {key: getattr(current_tournament, key) for key in update_data.keys()}
+
+    await tournament_repo.update_one(record_id=id, data=updated_tournament_data)
+    result = await tournament_repo.get_one(record_id=id)
+    return result
