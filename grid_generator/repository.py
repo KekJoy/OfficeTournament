@@ -26,9 +26,16 @@ class MatchRepository(SQLALchemyRepository):
             "queue_match_number": number,
             "round_id": round_id,
             "players_id": players,
-            "score": []
+            "score": [0, 0]
         })
 
 
 class GameRepository(SQLALchemyRepository):
     model = Game
+
+    def add_match_game(self, match_id: uuid.UUID, game_number: int):
+        return self.add_one(data={
+            "match_id": match_id,
+            "score": [0, 0],
+            "game_number": game_number
+        })
