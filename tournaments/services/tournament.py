@@ -95,7 +95,7 @@ async def start_tournament(id: uuid.UUID) -> None:
     """Начинает турнир"""
     from grid_generator.services.start import start
     tournament = await TournamentRepository().get_one(record_id=id)
-    TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
+    await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)
     
     
@@ -119,6 +119,7 @@ async def enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
 @tournament_router.patch("/{id}")
 async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     """Редактирование турнира"""
+
     tournament_repo = TournamentRepository()
     sport_repo = SportRepository()
 
