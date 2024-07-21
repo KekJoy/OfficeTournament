@@ -4,8 +4,10 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Query
 
 from auth.repository import UserRepository
-from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema
+from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
+    GetTournamentPageSchema, BriefUserSchema
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
+from tournaments.models.utils import TournamentStatusENUM
 
 tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
 
@@ -51,8 +53,8 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
     return result[offset_min:offset_max]
 
 
-@tournament_router.get("/{id}", response_model=GetTournamentSchema)
-async def get_tournament(id: uuid.UUID) -> GetTournamentSchema:
+@tournament_router.get("/{id}", response_model=GetTournamentPageSchema)
+async def get_tournament(id: uuid.UUID) -> GetTournamentPageSchema:
     """Получить турнир по ID"""
     tournament = await TournamentRepository().get_one(record_id=id)
     if not tournament:
@@ -64,7 +66,26 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentSchema:
     tournament_dict['grid_type'] = grid_type
     del tournament_dict['grid']
 
-    return GetTournamentSchema(**tournament_dict)
+    admin = await UserRepository().get_one(record_id=tournament.admins_id[0])
+    sport = await SportRepository().get_one(record_id=tournament.sport_id)
+
+    res = GetTournamentPageSchema(
+        **tournament_dict,
+        admin=BriefUserSchema(**admin.__dict__),
+        players_count=len(tournament.players_id),
+        sport_title=sport.name
+    )
+
+    return res
+
+
+@tournament_router.get("/{id}/players", response_model=List[BriefUserSchema])
+async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
+    """Получить игроков турнира"""
+    tournament = await TournamentRepository().get_one(record_id=id)
+    data = await UserRepository().get_many(tournament.players_id)
+    users = sorted((BriefUserSchema(**user.__dict__) for user in data), key=lambda p: p.full_name)
+    return users
 
 
 @tournament_router.post("/{id}/enroll/{user_id}")
