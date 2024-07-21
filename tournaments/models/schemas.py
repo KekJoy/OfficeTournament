@@ -7,6 +7,12 @@ from pydantic import BaseModel
 from tournaments.models.utils import GridTypeENUM, TournamentStatusENUM
 
 
+class BriefUserSchema(BaseModel):
+    id: UUID
+    full_name: str
+    avatar_id: int
+
+
 class CreateTournamentSchema(BaseModel):
     title: str
     description: Optional[str] | None = None
@@ -29,6 +35,12 @@ class GetTournamentSchema(CreateTournamentSchema):
     id: UUID
     players_id: List[UUID] | None = None
     status: TournamentStatusENUM
+
+
+class GetTournamentPageSchema(GetTournamentSchema):
+    admin: BriefUserSchema
+    players_count: int
+    sport_title: str
 
 
 class PatchTournamentSchema(BaseModel):
