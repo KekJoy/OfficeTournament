@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from auth.service import auth_router
+from auth.user import user_router
 from config import settings
 from tournaments.services.sport import sport_router
 from tournaments.services.tournament import tournament_router
@@ -24,3 +25,4 @@ async def root():
 app.include_router(auth_router, tags=['auth'])
 app.include_router(tournament_router, tags=['tournaments'])
 app.include_router(sport_router, tags=['sport'])
+app.include_router(user_router, tags=['user'])

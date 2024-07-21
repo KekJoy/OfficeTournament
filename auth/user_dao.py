@@ -128,3 +128,26 @@ class UserDAO:
         else:
             token = jwt.encode(payload, secret_key, algorithm="HS256")
         return str(token)
+
+    async def update_user(self, user_id: str, user_data: dict) -> User | None:
+        """
+        Updates a user record in the database with the given data.
+
+        :param user_id: The ID of the user to update.
+        :param user_data: A dictionary containing the updated user data.
+        :return: The updated User object, or None if the user does not exist.
+        """
+        try:
+            user = await self.get_user_by_id(user_id)
+            if user is None:
+                return None
+            await self.session.execute(
+                update(User)
+                .where(User.id == user_id)
+                .values(**user_data)
+            )
+            await self.session.commit()
+            return await self.get_user_by_id(user_id)
+        except DBAPIError as e:
+            await self.session.rollback()
+            raise e

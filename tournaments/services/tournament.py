@@ -93,6 +93,7 @@ async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
 @tournament_router.patch("/{id}")
 async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     """Редактирование турнира"""
+
     tournament_repo = TournamentRepository()
     sport_repo = SportRepository()
 

@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import UUID
 
 import bcrypt
@@ -64,6 +64,25 @@ class CreateUserRequest(BaseModel):
                 "password": "$2b$12$qYVpdWQf7zN24z3hXEUTtuDp02UoFCBMY3y448iVHUWfox/MPEGvq",
             }
         }
+
+
+class UserResponseModel(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    gender: str
+    birthdate: datetime
+    avatar_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class UserUpdateModel(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    birthdate: Optional[datetime] = None
+    avatar_id: Optional[int] = None
 
 
 class CreateUserResponseResult(BaseModel):
