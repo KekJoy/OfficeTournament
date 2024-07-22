@@ -1,7 +1,7 @@
 """add game number
 
 Revision ID: 45c62920b76f
-Revises: ac08ccfec4d0
+Revises: d3975461e626
 Create Date: 2024-07-20 21:47:20.619855
 
 """
