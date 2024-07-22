@@ -74,7 +74,7 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentPageSchema:
     res = GetTournamentPageSchema(
         **tournament_dict,
         admin=BriefUserSchema(**admin.__dict__),
-        players_count=len(tournament.players_id),
+        players_count=len(tournament.players_id) if tournament.players_id else 0,
         sport_title=sport.name
     )
 

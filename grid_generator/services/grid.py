@@ -14,7 +14,7 @@ grid_router = APIRouter(prefix='/grid', tags=['grids'])
 
 
 @grid_router.get('/{tournament_id}')
-async def get_grid(tournament_id: uuid.UUID):
+async def get_grid(tournament_id: uuid.UUID) -> GridSchemaWrapped:
     """Get grid data"""
     tournament = await TournamentRepository().get_one(record_id=tournament_id)
     grid_id = tournament.grid
