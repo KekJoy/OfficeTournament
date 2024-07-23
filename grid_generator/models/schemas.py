@@ -49,3 +49,7 @@ class GridSchema(BaseModel):
 
 class GridSchemaWrapped(BaseModel):
     grid: GridSchema
+
+
+class SetGameCountSchema(BaseModel):
+    game_count: int

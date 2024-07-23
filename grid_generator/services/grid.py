@@ -3,7 +3,8 @@ import uuid
 from fastapi import APIRouter
 
 from grid_generator.repository import RoundRepository, MatchRepository, GameRepository
-from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema, WrappedMatchSchema, GameSchema, UpdateScoreSchema
+from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema,\
+    WrappedMatchSchema, GameSchema, UpdateScoreSchema, SetGameCountSchema
 from tournaments.repository import TournamentRepository, GridRepository
 from utils.dict import get_users_dict, to_dict_list
 
@@ -131,3 +132,12 @@ async def get_results(tournament_id: uuid.UUID):
             worst -= 1
 
     return res
+
+@grid_router.patch("round/{round_id}/set_game_count")
+async def set_game_count(round_id: uuid.UUID, game_count: SetGameCountSchema):
+    _round = await RoundRepository().get(record_id=round_id)
+    if not _round:
+        raise HTTPException(status_code=400, detail="Round doesn't exist.")
+    await RoundRepository.update_one(record_id=round_id, data={"game_count": game_count.game_count})
+    return "ok"
+
