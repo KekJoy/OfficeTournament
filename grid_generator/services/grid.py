@@ -1,13 +1,11 @@
 import uuid
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter
 
-from auth.repository import UserRepository
 from grid_generator.repository import RoundRepository, MatchRepository, GameRepository
-from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, GridUserSchema, \
-    MatchSchema, WrappedMatchSchema, GameSchema, UpdateScoreSchema
+from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema, WrappedMatchSchema, GameSchema, UpdateScoreSchema
 from tournaments.repository import TournamentRepository, GridRepository
-from .util import get_users_dict, to_dict_list
+from utils.dict import get_users_dict, to_dict_list
 
 
 grid_router = APIRouter(prefix='/grid', tags=['grids'])

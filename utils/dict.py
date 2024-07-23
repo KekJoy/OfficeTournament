@@ -10,5 +10,9 @@ async def get_users_dict(users_id: list[uuid.UUID]) -> dict[uuid.UUID, GridUserS
     return {user.id: user for user in users}
 
 
+def get_id_dict(items: list):
+    return {item.id: item for item in items}
+
+
 def to_dict_list(objects: list) -> list[dict]:
     return [x.__dict__ for x in objects]

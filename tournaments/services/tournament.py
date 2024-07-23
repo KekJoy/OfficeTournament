@@ -5,9 +5,11 @@ from fastapi import APIRouter, HTTPException, Query
 
 from auth.repository import UserRepository
 from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
-    GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema
+    GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema, \
+    GetTournamentSchemaWithSportTitle
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 from tournaments.models.utils import TournamentStatusENUM
+from utils.dict import get_id_dict
 
 tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
 
@@ -41,6 +43,10 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
     offset_max = page * size
 
     tournaments = await TournamentRepository().filter_tournaments(filters.model_dump())
+
+    sports_list = await SportRepository().get([t.sport_id for t in tournaments])
+    sports = get_id_dict(sports_list)
+
     result = []
     for trnmt in tournaments:
         grid = await GridRepository().get(trnmt.grid)
@@ -48,8 +54,9 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
 
         tournament_dict = trnmt.__dict__
         tournament_dict['grid_type'] = grid_type
+        tournament_dict['sport_title'] = sports[trnmt.sport_id].name
         del tournament_dict['grid']
-        result.append(GetTournamentSchema(**tournament_dict))
+        result.append(GetTournamentSchemaWithSportTitle(**tournament_dict))
 
     total_count = len(result)
     return TournamentResponse(total_count=total_count, tournaments=result[offset_min:offset_max])
