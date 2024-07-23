@@ -16,7 +16,6 @@ user_actions = APIRouter(prefix="/user-actions", tags=["User Actions"])
 async def user_enroll(id: uuid.UUID, user: User = Depends(check_jwt),
                       Authorization: Annotated[list[str] | None, Header()] = None) -> GetTournamentSchema:
     """Участвовать в турнире"""
-    # TODO: check authorization
     tournament = await TournamentRepository().get_one(record_id=id)
     grid_type = await GridRepository().get_one(record_id=tournament.grid)
     players_id = tournament.players_id or []
@@ -28,6 +27,7 @@ async def user_enroll(id: uuid.UUID, user: User = Depends(check_jwt),
         raise HTTPException(status_code=400, detail="User doesn't exist.")
     players_id.append(user.id)
     await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
+
     tournament_dict = tournament.__dict__
     tournament_dict['grid_type'] = grid_type.grid_type
     return GetTournamentSchema(**tournament_dict)

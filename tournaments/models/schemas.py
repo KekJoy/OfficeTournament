@@ -37,6 +37,10 @@ class GetTournamentSchema(CreateTournamentSchema):
     status: TournamentStatusENUM
 
 
+class GetTournamentSchemaWithSportTitle(GetTournamentSchema):
+    sport_title: str
+
+
 class GetTournamentPageSchema(GetTournamentSchema):
     admin: BriefUserSchema
     players_count: int
@@ -55,7 +59,7 @@ class PatchTournamentSchema(BaseModel):
 
 class TournamentResponse(BaseModel):
     total_count: int
-    tournaments: List[GetTournamentSchema]
+    tournaments: List[GetTournamentSchemaWithSportTitle]
 
 
 class TournamentFiltersSchema(BaseModel):
