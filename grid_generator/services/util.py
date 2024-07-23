@@ -5,7 +5,7 @@ from grid_generator.models.schemas import GridUserSchema
 
 
 async def get_users_dict(users_id: list[uuid.UUID]) -> dict[uuid.UUID, GridUserSchema]:
-    data = await UserRepository().get_many(users_id)
+    data = await UserRepository().get(users_id)
     users = [GridUserSchema(**user.__dict__) for user in data]
     return {user.id: user for user in users}
 

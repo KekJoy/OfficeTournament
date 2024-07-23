@@ -16,9 +16,9 @@ grid_router = APIRouter(prefix='/grid', tags=['grids'])
 @grid_router.get('/{tournament_id}')
 async def get_grid(tournament_id: uuid.UUID) -> GridSchemaWrapped:
     """Get grid data"""
-    tournament = await TournamentRepository().get_one(record_id=tournament_id)
+    tournament = await TournamentRepository().get(record_id=tournament_id)
     grid_id = tournament.grid
-    _grid = await GridRepository().get_one(record_id=grid_id)
+    _grid = await GridRepository().get(record_id=grid_id)
     users = await get_users_dict(tournament.players_id)
 
     rounds = to_dict_list(await RoundRepository().find_all(conditions={'grid_id': grid_id}))
@@ -38,8 +38,8 @@ async def get_grid(tournament_id: uuid.UUID) -> GridSchemaWrapped:
 @grid_router.get('/match/{id}')
 async def get_match(id: uuid.UUID) -> WrappedMatchSchema:
     """Get all match data"""
-    _match = await MatchRepository().get_one(record_id=id)
-    _round = await RoundRepository().get_one(record_id=_match.round_id)
+    _match = await MatchRepository().get(record_id=id)
+    _round = await RoundRepository().get(record_id=_match.round_id)
 
     _games = await GameRepository().find_all(conditions={'match_id': _match.id}) or []
 
@@ -51,7 +51,7 @@ async def get_match(id: uuid.UUID) -> WrappedMatchSchema:
         games.append(GameSchema(**i.__dict__))
     for i in range(len(_games) + 1, _round.game_count + 1):
         game_id = await GameRepository().add_match_game(_match.id, i)
-        game = await GameRepository().get_one(record_id=game_id)
+        game = await GameRepository().get(record_id=game_id)
         games.append(GameSchema(**game.__dict__))
 
     base = BasicMatchSchema(**_match.__dict__, players=players)
@@ -78,8 +78,8 @@ async def update_game(id: uuid.UUID, game_score: UpdateScoreSchema) -> UpdateSco
 async def end_match(id: uuid.UUID) -> uuid.UUID:
     # TODO: implement CIRCLE grid type
     """End match, move winner on"""
-    _match = await MatchRepository().get_one(record_id=id)
-    _round = await RoundRepository().get_one(record_id=_match.round_id)
+    _match = await MatchRepository().get(record_id=id)
+    _round = await RoundRepository().get(record_id=_match.round_id)
     rounds = await RoundRepository().find_all(conditions={'grid_id': _round.grid_id})
 
     main_rounds_count = max(rounds, key=lambda r: r.round_number).round_number
@@ -112,10 +112,10 @@ async def end_match(id: uuid.UUID) -> uuid.UUID:
 
 @grid_router.get("/results/{tournament_id}")
 async def get_results(tournament_id: uuid.UUID):
-    tournament = await TournamentRepository().get_one(record_id=tournament_id)
+    tournament = await TournamentRepository().get(record_id=tournament_id)
     grid_id = tournament.grid
     players_id = tournament.players_id
-    grid = await GridRepository().get_one(record_id=grid_id)
+    grid = await GridRepository().get(record_id=grid_id)
 
     worst = len(players_id)
     res = []

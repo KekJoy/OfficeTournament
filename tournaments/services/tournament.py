@@ -43,7 +43,7 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
     tournaments = await TournamentRepository().filter_tournaments(filters.model_dump())
     result = []
     for trnmt in tournaments:
-        grid = await GridRepository().get_one(trnmt.grid)
+        grid = await GridRepository().get(trnmt.grid)
         grid_type = grid.grid_type if grid else None
 
         tournament_dict = trnmt.__dict__
@@ -58,18 +58,18 @@ async def get_all_tournaments(filters: TournamentFiltersSchema,
 @tournament_router.get("/{id}", response_model=GetTournamentPageSchema)
 async def get_tournament(id: uuid.UUID) -> GetTournamentPageSchema:
     """Получить турнир по ID"""
-    tournament = await TournamentRepository().get_one(record_id=id)
+    tournament = await TournamentRepository().get(record_id=id)
     if not tournament:
         raise HTTPException(status_code=400, detail="The tournament with the transferred ID does not exist.")
-    grid = await GridRepository().get_one(tournament.grid)
+    grid = await GridRepository().get(tournament.grid)
     grid_type = grid.grid_type if grid else None
 
     tournament_dict = tournament.__dict__
     tournament_dict['grid_type'] = grid_type
     del tournament_dict['grid']
 
-    admin = await UserRepository().get_one(record_id=tournament.admins_id[0])
-    sport = await SportRepository().get_one(record_id=tournament.sport_id)
+    admin = await UserRepository().get(record_id=tournament.admins_id[0])
+    sport = await SportRepository().get(record_id=tournament.sport_id)
 
     res = GetTournamentPageSchema(
         **tournament_dict,
@@ -84,8 +84,8 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentPageSchema:
 @tournament_router.get("/{id}/players", response_model=List[BriefUserSchema])
 async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
     """Получить игроков турнира"""
-    tournament = await TournamentRepository().get_one(record_id=id)
-    data = await UserRepository().get_many(tournament.players_id)
+    tournament = await TournamentRepository().get(record_id=id)
+    data = await UserRepository().get(tournament.players_id)
     users = sorted((BriefUserSchema(**user.__dict__) for user in data), key=lambda p: p.full_name)
     return users
 
@@ -94,7 +94,7 @@ async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
 async def start_tournament(id: uuid.UUID) -> None:
     """Начинает турнир"""
     from grid_generator.services.start import start
-    tournament = await TournamentRepository().get_one(record_id=id)
+    tournament = await TournamentRepository().get(record_id=id)
     await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)
 
@@ -106,7 +106,7 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     tournament_repo = TournamentRepository()
     sport_repo = SportRepository()
 
-    current_tournament = await tournament_repo.get_one(record_id=id)
+    current_tournament = await tournament_repo.get(record_id=id)
     if not current_tournament:
         raise HTTPException(status_code=400, detail="The tournament with the transferred ID does not exist.")
 
@@ -128,5 +128,5 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     updated_tournament_data = {key: getattr(current_tournament, key) for key in update_data.keys()}
 
     await tournament_repo.update_one(record_id=id, data=updated_tournament_data)
-    result = await tournament_repo.get_one(record_id=id)
+    result = await tournament_repo.get(record_id=id)
     return result

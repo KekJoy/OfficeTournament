@@ -12,7 +12,7 @@ from tournaments.services.tournament import tournament_router
 async def user_enroll(id: uuid.UUID, user_id: uuid.UUID):
     """Участвовать в турнире"""
     # TODO: check authorization
-    tournament = await TournamentRepository().get_one(record_id=id)
+    tournament = await TournamentRepository().get(record_id=id)
     players_id = tournament.players_id or []
     if user_id in players_id:
         raise HTTPException(status_code=400, detail="The user is already enrolled.")
