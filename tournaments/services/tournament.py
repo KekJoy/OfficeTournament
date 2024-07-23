@@ -139,3 +139,32 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     await tournament_repo.update_one(record_id=id, data=updated_tournament_data)
     result = await tournament_repo.get(record_id=id)
     return result
+
+
+@tournament_router.post("/user_tournaments", response_model=TournamentResponse)
+async def get_user_tournaments(user: User = Depends(check_jwt),
+                               Authorization: Annotated[list[str] | None, Header()] = None,
+                               page: int = Query(ge=1, default=1),
+                               size: int = Query(ge=1, le=100)) -> TournamentResponse:
+    """Получить турниры, в которых участвует пользователь"""
+    offset_min = (page - 1) * size
+    offset_max = page * size
+
+    tournaments = await TournamentRepository().find_user_tournaments(user.id)
+
+    sports_list = await SportRepository().get([t.sport_id for t in tournaments])
+    sports = get_id_dict(sports_list)
+
+    result = []
+    for trnmt in tournaments:
+        grid = await GridRepository().get(trnmt.grid)
+        grid_type = grid.grid_type if grid else None
+
+        tournament_dict = trnmt.__dict__
+        tournament_dict['grid_type'] = grid_type
+        tournament_dict['sport_title'] = sports[trnmt.sport_id].name
+        del tournament_dict['grid']
+        result.append(GetTournamentSchemaWithSportTitle(**tournament_dict))
+
+    total_count = len(result)
+    return TournamentResponse(total_count=total_count, tournaments=result[offset_min:offset_max])

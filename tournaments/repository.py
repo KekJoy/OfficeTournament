@@ -1,4 +1,6 @@
-from sqlalchemy import select, func, and_, cast, Date
+import uuid
+
+from sqlalchemy import select, func, and_, cast, Date, any_, text
 from sqlalchemy.exc import NoResultFound
 
 from database import async_session_maker
@@ -44,6 +46,13 @@ class TournamentRepository(SQLALchemyRepository):
             if conditions:
                 query = query.where(and_(*conditions))
 
+            result = await session.execute(query)
+            tournaments = result.scalars().all()
+            return tournaments
+
+    async def find_user_tournaments(self, user_id: uuid.UUID):
+        async with async_session_maker() as session:
+            query = select(self.model).where(self.model.players_id.any(user_id))
             result = await session.execute(query)
             tournaments = result.scalars().all()
             return tournaments
