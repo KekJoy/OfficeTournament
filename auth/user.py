@@ -8,7 +8,7 @@ from auth.jwt_checker import check_jwt, check_jwt_refresh
 from auth.models.schemas import RefreshTokenResponse, UserResponse, UserResponseModel, UserUpdateModel
 from database import get_async_session
 
-user_router = APIRouter()
+user_router = APIRouter(tags=["User Profile"])
 
 
 @user_router.get("/me", response_model=UserResponse)

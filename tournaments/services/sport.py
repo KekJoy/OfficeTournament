@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from tournaments.models.schemas import CreateSportSchema, GetSportSchema
 from tournaments.repository import SportRepository
 
-sport_router = APIRouter(prefix='/sport', tags=['sport'])
+sport_router = APIRouter(prefix='/sport', tags=['Sport'])
 
 
 @sport_router.post("/create", response_model=GetSportSchema)

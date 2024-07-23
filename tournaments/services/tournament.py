@@ -1,15 +1,17 @@
 import uuid
-from typing import List, Dict
+from typing import List, Dict, Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 
+from auth.jwt_checker import check_jwt
+from auth.models.db import User
 from auth.repository import UserRepository
 from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
     GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 from tournaments.models.utils import TournamentStatusENUM
 
-tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
+tournament_router = APIRouter(prefix='/tournament', tags=['Tournaments'])
 
 
 @tournament_router.post("/create", response_model=uuid.UUID)
@@ -97,25 +99,8 @@ async def start_tournament(id: uuid.UUID) -> None:
     tournament = await TournamentRepository().get_one(record_id=id)
     await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)
-    
-    
-@tournament_router.post("/{id}/enroll/{user_id}")
-async def enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
-    """Участвовать в турнире"""
-    # TODO: check authorization
-    tournament = await TournamentRepository().get_one(record_id=id)
-    players_id = tournament.players_id or []
-    if user_id in players_id:
-        raise HTTPException(status_code=400, detail="The user is already enrolled.")
-    if len(players_id) >= tournament.teams_limit:
-        raise HTTPException(status_code=400, detail="The players limit has been reached.")
-    if not await UserRepository().find_one(record_id=user_id):
-        raise HTTPException(status_code=400, detail="User doesn't exist.")
-    players_id.append(user_id)
-    await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
-    return GetTournamentSchema(**tournament.__dict__)
 
-  
+
 @tournament_router.patch("/{id}")
 async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     """Редактирование турнира"""
@@ -147,4 +132,3 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     await tournament_repo.update_one(record_id=id, data=updated_tournament_data)
     result = await tournament_repo.get_one(record_id=id)
     return result
-

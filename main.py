@@ -7,6 +7,7 @@ from config import settings
 from grid_generator.services.grid import grid_router
 from tournaments.services.sport import sport_router
 from tournaments.services.tournament import tournament_router
+from tournaments.services.user_actions import user_actions
 
 app = FastAPI(title="Office Tournament")
 
@@ -23,8 +24,9 @@ app.add_middleware(
 async def root():
     return {"message": "Hello World"}
 
-app.include_router(auth_router, tags=['auth'])
-app.include_router(tournament_router, tags=['tournaments'])
-app.include_router(sport_router, tags=['sport'])
-app.include_router(grid_router, tags=['grids'])
-app.include_router(user_router, tags=['user'])
+app.include_router(auth_router, tags=['Auth'])
+app.include_router(tournament_router, tags=['Tournaments'])
+app.include_router(sport_router, tags=['Sport'])
+app.include_router(grid_router, tags=['Grids'])
+app.include_router(user_router, tags=['User Profile'])
+app.include_router(user_actions, tags=["User Actions"])
