@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, UUID, String, DateTime, func, ARRAY, Integer, ForeignKey
+from sqlalchemy import Column, UUID, String, DateTime, func, ARRAY, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.dialects.postgresql import ENUM
 
@@ -42,5 +42,4 @@ class Grid(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     grid_type = Column(ENUM(GridTypeENUM, name="grid_type_enum", create_type=False), nullable=False,
                        default=GridTypeENUM.PLAYOFF)
-
-
+    third_place_match = Column(Boolean, nullable=False, default=False)
