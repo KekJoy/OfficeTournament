@@ -15,7 +15,7 @@ from auth.models.schemas import (
 )
 from config import settings
 
-auth_router = APIRouter(prefix='/auth', tags=['auth'])
+auth_router = APIRouter(prefix='/auth', tags=['Auth'])
 
 
 @auth_router.post("/create_user", response_model=CreateUserResponse)

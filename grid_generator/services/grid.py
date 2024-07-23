@@ -9,7 +9,7 @@ from tournaments.repository import TournamentRepository, GridRepository
 from utils.dict import get_users_dict, to_dict_list
 
 
-grid_router = APIRouter(prefix='/grid', tags=['grids'])
+grid_router = APIRouter(prefix='/grid', tags=['Grids'])
 
 
 @grid_router.get('/{tournament_id}')

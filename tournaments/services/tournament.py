@@ -1,8 +1,10 @@
 import uuid
-from typing import List, Dict
+from typing import List, Dict, Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends, Header
 
+from auth.jwt_checker import check_jwt
+from auth.models.db import User
 from auth.repository import UserRepository
 from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
     GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema, \
@@ -11,7 +13,7 @@ from tournaments.repository import SportRepository, TournamentRepository, GridRe
 from tournaments.models.utils import TournamentStatusENUM
 from utils.dict import get_id_dict
 
-tournament_router = APIRouter(prefix='/tournament', tags=['tournaments'])
+tournament_router = APIRouter(prefix='/tournament', tags=['Tournaments'])
 
 
 @tournament_router.post("/create", response_model=uuid.UUID)
