@@ -19,6 +19,6 @@ async def get_matches_by_grid_type(players, grid):
 
 async def start(tournament: dict) -> None:
     players = tournament["players_id"]
-    grid = await GridRepository().get_one(tournament["grid"])
+    grid = await GridRepository().get(tournament["grid"])
     players = await shuffle_players(players, grid.id)
     await get_matches_by_grid_type(players, grid)

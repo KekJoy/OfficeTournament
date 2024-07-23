@@ -12,23 +12,23 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update_one(self):
+    async def update_one(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_one(self):
+    async def delete_one(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_one(self):
+    async def find_one(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    async def find_all(self):
+    async def find_all(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_one(self):
+    async def get(self, *args, **kwargs):
         raise NotImplementedError
 
 
@@ -98,11 +98,25 @@ class SQLALchemyRepository(AbstractRepository):
             await session.commit()
             return result.rowcount
 
-    async def get_one(self, record_id):
+    async def get(self, record_id):
+        try:
+            iter(record_id)
+        except TypeError:
+            single = True
+        else:
+            single = False
+
         async with async_session_maker() as session:
-            try:
-                query = select(self.model).where(self.model.id == record_id)
-                result = await session.execute(query)
-                return result.scalar_one()
-            except NoResultFound:
-                return False
+            if single:
+                try:
+                    query = select(self.model)\
+                        .where(self.model.id == record_id)
+                    result = await session.execute(query)
+                    return result.scalar_one()
+                except NoResultFound:
+                    return False
+            else:
+                query = select(self.model)\
+                    .filter(self.model.id.in_(record_id))
+                res = await session.execute(query)
+                return res.scalars().all()
