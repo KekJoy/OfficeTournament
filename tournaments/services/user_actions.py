@@ -9,7 +9,7 @@ from tournaments.services.tournament import tournament_router
 
 
 @tournament_router.post("/{id}/enroll/{user_id}")
-async def user_enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
+async def user_enroll(id: uuid.UUID, user_id: uuid.UUID):
     """Участвовать в турнире"""
     # TODO: check authorization
     tournament = await TournamentRepository().get_one(record_id=id)
@@ -22,4 +22,4 @@ async def user_enroll(id: uuid.UUID, user_id: uuid.UUID) -> GetTournamentSchema:
         raise HTTPException(status_code=400, detail="User doesn't exist.")
     players_id.append(user_id)
     await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
-    return GetTournamentSchema(**tournament.__dict__)
+    return "ok"
