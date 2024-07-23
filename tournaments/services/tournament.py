@@ -6,12 +6,13 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from auth.jwt_checker import check_jwt
 from auth.models.db import User
 from auth.repository import UserRepository
-from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
+from tournaments.models.schemas import CreateTournamentSchema, TournamentFiltersSchema, \
     GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema, \
     GetTournamentSchemaWithSportTitle
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 from tournaments.models.utils import TournamentStatusENUM
 from utils.dict import get_id_dict
+from grid_generator.services.start import start
 
 tournament_router = APIRouter(prefix='/tournament', tags=['Tournaments'])
 
@@ -102,7 +103,6 @@ async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
 @tournament_router.get("/{id}/start")
 async def start_tournament(id: uuid.UUID) -> None:
     """Начинает турнир"""
-    from grid_generator.services.start import start
     tournament = await TournamentRepository().get(record_id=id)
     await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)

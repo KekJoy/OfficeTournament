@@ -54,3 +54,25 @@ async def user_unenroll(id: uuid.UUID, user: User = Depends(check_jwt),
     tournament_dict['grid_type'] = grid_type.grid_type
 
     return GetTournamentSchema(**tournament_dict)
+
+
+@user_actions.delete("/{id}/unenroll/{player_id}")
+async def user_unenroll(id: uuid.UUID, player_id: uuid.UUID, user: User = Depends(check_jwt),
+                        Authorization: Annotated[list[str] | None, Header()] = None) -> GetTournamentSchema:
+    """Удалить участника из турнира"""
+    tournament = await TournamentRepository().get(record_id=id)
+    grid_type = await GridRepository().get(record_id=tournament.grid)
+    players_id = tournament.players_id or []
+
+    if user.id not in tournament.admins_id:
+        raise HTTPException(status_code=403, detail="Only tournament admins can remove participants.")
+
+    if player_id not in players_id:
+        raise HTTPException(status_code=400, detail="The user is not enrolled in the tournament.")
+
+    players_id.remove(player_id)
+    await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
+
+    tournament_dict = tournament.__dict__
+    tournament_dict['grid_type'] = grid_type.grid_type
+    return GetTournamentSchema(**tournament_dict)
