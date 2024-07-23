@@ -16,8 +16,8 @@ user_actions = APIRouter(prefix="/user-actions", tags=["User Actions"])
 async def user_enroll(id: uuid.UUID, user: User = Depends(check_jwt),
                       Authorization: Annotated[list[str] | None, Header()] = None) -> GetTournamentSchema:
     """Участвовать в турнире"""
-    tournament = await TournamentRepository().get_one(record_id=id)
-    grid_type = await GridRepository().get_one(record_id=tournament.grid)
+    tournament = await TournamentRepository().get(record_id=id)
+    grid_type = await GridRepository().get(record_id=tournament.grid)
     players_id = tournament.players_id or []
     if user.id in players_id:
         raise HTTPException(status_code=400, detail="The user is already enrolled.")
@@ -37,7 +37,7 @@ async def user_enroll(id: uuid.UUID, user: User = Depends(check_jwt),
 async def user_unenroll(id: uuid.UUID, user: User = Depends(check_jwt),
                         Authorization: Annotated[list[str] | None, Header()] = None) -> GetTournamentSchema:
     """Выйти из турнира"""
-    tournament = await TournamentRepository().get_one(record_id=id)
+    tournament = await TournamentRepository().get(record_id=id)
     if not tournament:
         raise HTTPException(status_code=404, detail="Tournament not found.")
 
@@ -49,7 +49,7 @@ async def user_unenroll(id: uuid.UUID, user: User = Depends(check_jwt),
     players_id.remove(user.id)
     await TournamentRepository().update_one(record_id=id, data={"players_id": players_id})
 
-    grid_type = await GridRepository().get_one(record_id=tournament.grid)
+    grid_type = await GridRepository().get(record_id=tournament.grid)
     tournament_dict = tournament.__dict__
     tournament_dict['grid_type'] = grid_type.grid_type
 
