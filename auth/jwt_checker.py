@@ -1,5 +1,4 @@
 import datetime
-import uuid
 
 import jwt
 from fastapi import Depends, HTTPException
