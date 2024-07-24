@@ -51,5 +51,18 @@ class GridSchemaWrapped(BaseModel):
     grid: GridSchema
 
 
+class PlayerResultSchema(BaseModel):
+    player: GridUserSchema
+    place: str
+
+
+class ResultsSchema(BaseModel):
+    results: List[PlayerResultSchema]
+
+
 class SetGameCountSchema(BaseModel):
     game_count: int
+
+
+class QueueSchema(BaseModel):
+    matches: List[BasicMatchSchema]

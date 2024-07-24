@@ -30,9 +30,13 @@ async def create_tournament(tournament: CreateTournamentSchema,
                                                     "tournament administrator does not exist in the system.")
     if tournament.team_players_limit and tournament.teams_limit <= 0:
         raise HTTPException(status_code=400, detail="Incorrect number of players when creating a tournament.")
-    grid_id = await GridRepository().add_one({"grid_type": f"{tournament.grid_type}"})
+    grid_id = await GridRepository().add_one({
+        "grid_type": f"{tournament.grid_type}",
+        "third_place_match": tournament.third_place_match
+    })
     tournament_dict = tournament.model_dump()
     del tournament_dict["grid_type"]
+    del tournament_dict["third_place_match"]
     tournament_dict["grid"] = grid_id
     result = await TournamentRepository().add_one(tournament_dict)
     return result
