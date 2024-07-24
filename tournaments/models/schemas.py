@@ -25,6 +25,7 @@ class CreateTournamentSchema(BaseModel):
     admins_id: List[UUID]
     team_players_limit: int
     teams_limit: int
+    third_place_match: bool = False
 
     class Config:
         use_enum_values = True
