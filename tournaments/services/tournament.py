@@ -6,12 +6,13 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from auth.jwt_checker import check_jwt
 from auth.models.db import User
 from auth.repository import UserRepository
-from tournaments.models.schemas import CreateTournamentSchema, GetTournamentSchema, TournamentFiltersSchema, \
+from tournaments.models.schemas import CreateTournamentSchema, TournamentFiltersSchema, \
     GetTournamentPageSchema, BriefUserSchema, TournamentResponse, PatchTournamentSchema, \
     GetTournamentSchemaWithSportTitle
 from tournaments.repository import SportRepository, TournamentRepository, GridRepository
 from tournaments.models.utils import TournamentStatusENUM
 from utils.dict import get_id_dict
+from grid_generator.services.start import start
 
 tournament_router = APIRouter(prefix='/tournament', tags=['Tournaments'])
 
@@ -102,7 +103,6 @@ async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
 @tournament_router.get("/{id}/start")
 async def start_tournament(id: uuid.UUID) -> None:
     """Начинает турнир"""
-    from grid_generator.services.start import start
     tournament = await TournamentRepository().get(record_id=id)
     await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)
@@ -139,3 +139,32 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     await tournament_repo.update_one(record_id=id, data=updated_tournament_data)
     result = await tournament_repo.get(record_id=id)
     return result
+
+
+@tournament_router.post("/user_tournaments", response_model=TournamentResponse)
+async def get_user_tournaments(user: User = Depends(check_jwt),
+                               Authorization: Annotated[list[str] | None, Header()] = None,
+                               page: int = Query(ge=1, default=1),
+                               size: int = Query(ge=1, le=100)) -> TournamentResponse:
+    """Получить турниры, в которых участвует пользователь"""
+    offset_min = (page - 1) * size
+    offset_max = page * size
+
+    tournaments = await TournamentRepository().find_user_tournaments(user.id)
+
+    sports_list = await SportRepository().get([t.sport_id for t in tournaments])
+    sports = get_id_dict(sports_list)
+
+    result = []
+    for trnmt in tournaments:
+        grid = await GridRepository().get(trnmt.grid)
+        grid_type = grid.grid_type if grid else None
+
+        tournament_dict = trnmt.__dict__
+        tournament_dict['grid_type'] = grid_type
+        tournament_dict['sport_title'] = sports[trnmt.sport_id].name
+        del tournament_dict['grid']
+        result.append(GetTournamentSchemaWithSportTitle(**tournament_dict))
+
+    total_count = len(result)
+    return TournamentResponse(total_count=total_count, tournaments=result[offset_min:offset_max])
