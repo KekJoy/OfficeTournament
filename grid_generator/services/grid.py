@@ -1,10 +1,11 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from grid_generator.repository import RoundRepository, MatchRepository, GameRepository
-from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema,\
-    WrappedMatchSchema, GameSchema, UpdateScoreSchema, SetGameCountSchema
+from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema, \
+    WrappedMatchSchema, GameSchema, UpdateScoreSchema, SetGameCountSchema, ResultsSchema
+from grid_generator.services.results import get_next_match, update_next_match, get_update_winner, get_match_results
 from tournaments.repository import TournamentRepository, GridRepository
 from utils.dict import get_users_dict, to_dict_list
 
@@ -62,6 +63,11 @@ async def get_match(id: uuid.UUID) -> WrappedMatchSchema:
 @grid_router.patch("/match/{id}")
 async def update_match(id: uuid.UUID, match_score: UpdateScoreSchema) -> UpdateScoreSchema:
     """Update match score"""
+    _match = await MatchRepository().get(record_id=id)
+    if not _match:
+        raise HTTPException(status_code=404, detail="The match doesn't exist.")
+    if not all(_match.players_id):
+        raise HTTPException(status_code=400, detail="The match is not valid yet.")
     await MatchRepository().update_one(record_id=id, data={"score": match_score.score})
     return match_score
 
@@ -69,6 +75,9 @@ async def update_match(id: uuid.UUID, match_score: UpdateScoreSchema) -> UpdateS
 @grid_router.patch("/game/{id}")
 async def update_game(id: uuid.UUID, game_score: UpdateScoreSchema) -> UpdateScoreSchema:
     """Update game score"""
+    game = await GameRepository().get(record_id=id)
+    if not game:
+        raise HTTPException(status_code=404, detail="The game doesn't exist.")
     await GameRepository().update_one(record_id=id, data={"score": game_score.score})
     return game_score
 
@@ -82,56 +91,58 @@ async def end_match(id: uuid.UUID) -> uuid.UUID:
     rounds = await RoundRepository().find_all(conditions={'grid_id': _round.grid_id})
 
     main_rounds_count = max(rounds, key=lambda r: r.round_number).round_number
-
-    if _round.round_number == main_rounds_count:
-        winner_id = _match.players_id[max(0, 1, key=lambda i: _match.score[i])]
-        await MatchRepository().update_one(record_id=id, data={"winner_id": winner_id})
-        return winner_id
-
-    main_rounds_count = 3
+    grid_match_number = _match.grid_match_number
     round_number = _round.round_number
 
-    players_count = 1 << main_rounds_count
-    round_match_count = players_count >> round_number
-    round_match_number = _match.grid_match_number % (round_match_count << 1)
-    max_round_match_number = _match.grid_match_number + round_match_count - round_match_number
-    next_match_number = max_round_match_number + ((round_match_number + 1) >> 1)
+    if not _round or not _match:
+        raise HTTPException(status_code=404, detail="The round or the match doesn't exist")
+    if not all(_match.players_id):
+        raise HTTPException(status_code=400, detail="The match is not valid yet.")
 
-    winner_id = _match.players_id[max(0, 1, key=lambda i: _match.score[i])]
-    await MatchRepository().update_one(record_id=id, data={"winner_id": winner_id})
+    if round_number == main_rounds_count:
+        return await get_update_winner(_match, id)
 
-    next_match = (await MatchRepository().find_all({
-        "round_id": rounds[_round.round_number].id,
-        "grid_match_number": next_match_number
-    }, AND=True))[0]
-    players_id = next_match.players_id
-    players_id[_match.grid_match_number & 1 ^ 1] = winner_id
-    await MatchRepository().update_one(record_id=next_match.id, data={"players_id": players_id})
+    next_match_number = await get_next_match(
+        grid_match_number,
+        round_number,
+        main_rounds_count)
+
+    winner_id = await get_update_winner(_match, id)
+
+    await update_next_match(grid_match_number, next_match_number, round_number, rounds, winner_id)
     return winner_id
 
+
 @grid_router.get("/results/{tournament_id}")
-async def get_results(tournament_id: uuid.UUID):
+async def get_results(tournament_id: uuid.UUID) -> ResultsSchema:
     tournament = await TournamentRepository().get(record_id=tournament_id)
     grid_id = tournament.grid
     players_id = tournament.players_id
     grid = await GridRepository().get(record_id=grid_id)
+    players = await get_users_dict(tournament.players_id)
 
     worst = len(players_id)
     res = []
 
-    rounds = await RoundRepository().find_all(conditions={'grid_id': grid_id})
+    rounds = sorted(await RoundRepository().find_all(conditions={'grid_id': grid_id}), key=lambda r: r.round_number)
     for _round in rounds:
+        if _round.round_number == 0:
+            continue
+
         matches = await MatchRepository().find_all(conditions={'round_id': _round.id})
         best = worst - len(matches) + 1
-        for _match in matches:
-            loser = list(set(_match.players_id) - {_match.winner_id})[0]
-            res.append({
-                "player_id": loser,
-                "place": f"{worst} - {best}"
-            })
-            worst -= 1
+        range_place = f"{best} — {worst}"
+        worst -= len(matches)
 
-    return res
+        if best == 2:
+            res += await get_match_results(matches[0], players, "2", "1")
+        elif best == 3 and grid.third_place_match:
+            _match = rounds[0]
+            res += await get_match_results(_match, players, "4", "3")
+        else:
+            res += [await get_match_results(_match, players, range_place) for _match in matches]
+
+    return ResultsSchema(results=res)
 
 @grid_router.patch("round/{round_id}/set_game_count")
 async def set_game_count(round_id: uuid.UUID, game_count: SetGameCountSchema):
