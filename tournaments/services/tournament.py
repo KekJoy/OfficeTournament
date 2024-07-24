@@ -18,7 +18,8 @@ tournament_router = APIRouter(prefix='/tournament', tags=['Tournaments'])
 
 
 @tournament_router.post("/create", response_model=uuid.UUID)
-async def create_tournament(tournament: CreateTournamentSchema) -> uuid.UUID:
+async def create_tournament(tournament: CreateTournamentSchema,
+                            user: User = Depends(check_jwt), Authorization: str = Header()) -> uuid.UUID:
     """Создание турнира"""
     if not await SportRepository().find_one(tournament.sport_id):
         raise HTTPException(status_code=400, detail="The sport does not exist in the system.")
@@ -92,7 +93,7 @@ async def get_tournament(id: uuid.UUID) -> GetTournamentPageSchema:
 
 
 @tournament_router.get("/{id}/players", response_model=List[BriefUserSchema])
-async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
+async def get_players(id: uuid.UUID, user: User = Depends(check_jwt), Authorization: str = Header()) -> List[BriefUserSchema]:
     """Получить игроков турнира"""
     tournament = await TournamentRepository().get(record_id=id)
     data = await UserRepository().get(tournament.players_id)
@@ -101,15 +102,18 @@ async def get_players(id: uuid.UUID) -> List[BriefUserSchema]:
 
 
 @tournament_router.get("/{id}/start")
-async def start_tournament(id: uuid.UUID) -> None:
+async def start_tournament(id: uuid.UUID, user: User = Depends(check_jwt), Authorization: str = Header()) -> None:
     """Начинает турнир"""
     tournament = await TournamentRepository().get(record_id=id)
+    if tournament.admins_id[0] != user.id:
+        raise HTTPException(status_code=403, detail="You are not the owner of the tournament.")
     await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)
 
 
 @tournament_router.patch("/{id}")
-async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
+async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema,
+                           user: User = Depends(check_jwt), Authorization: str = Header()):
     """Редактирование турнира"""
 
     tournament_repo = TournamentRepository()
@@ -118,6 +122,9 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema):
     current_tournament = await tournament_repo.get(record_id=id)
     if not current_tournament:
         raise HTTPException(status_code=400, detail="The tournament with the transferred ID does not exist.")
+
+    if current_tournament.admins_id[0] != user.id:
+        raise HTTPException(status_code=403, detail="You are not the owner of the tournament.")
 
     if tournament.sport_id and not await sport_repo.find_one(record_id=tournament.sport_id):
         raise HTTPException(status_code=400, detail="The sport with the transferred ID does not exist.")

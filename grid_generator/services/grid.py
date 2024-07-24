@@ -1,19 +1,21 @@
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Header, HTTPException
 
+from auth.jwt_checker import check_jwt
+from auth.models.db import User
 from grid_generator.repository import RoundRepository, MatchRepository, GameRepository
-from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema,\
+from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema, \
     WrappedMatchSchema, GameSchema, UpdateScoreSchema, SetGameCountSchema
 from tournaments.repository import TournamentRepository, GridRepository
 from utils.dict import get_users_dict, to_dict_list
-
 
 grid_router = APIRouter(prefix='/grid', tags=['Grids'])
 
 
 @grid_router.get('/{tournament_id}')
-async def get_grid(tournament_id: uuid.UUID) -> GridSchemaWrapped:
+async def get_grid(tournament_id: uuid.UUID,
+                   user: User = Depends(check_jwt), Authorization: str = Header()) -> GridSchemaWrapped:
     """Get grid data"""
     tournament = await TournamentRepository().get(record_id=tournament_id)
     grid_id = tournament.grid
@@ -30,12 +32,14 @@ async def get_grid(tournament_id: uuid.UUID) -> GridSchemaWrapped:
         _round['matches'] = [BasicMatchSchema(**m) for m in matches]
 
     rounds = [RoundSchema(**r) for r in rounds]
-    wrapped = GridSchemaWrapped(grid=GridSchema(id=grid_id, grid_type=_grid.grid_type, rounds=rounds, third_place_match=None))
+    wrapped = GridSchemaWrapped(
+        grid=GridSchema(id=grid_id, grid_type=_grid.grid_type, rounds=rounds, third_place_match=None))
     return wrapped
 
 
 @grid_router.get('/match/{id}')
-async def get_match(id: uuid.UUID) -> WrappedMatchSchema:
+async def get_match(id: uuid.UUID,
+                    user: User = Depends(check_jwt), Authorization: str = Header()) -> WrappedMatchSchema:
     """Get all match data"""
     _match = await MatchRepository().get(record_id=id)
     _round = await RoundRepository().get(record_id=_match.round_id)
@@ -60,21 +64,24 @@ async def get_match(id: uuid.UUID) -> WrappedMatchSchema:
 
 
 @grid_router.patch("/match/{id}")
-async def update_match(id: uuid.UUID, match_score: UpdateScoreSchema) -> UpdateScoreSchema:
+async def update_match(id: uuid.UUID, match_score: UpdateScoreSchema,
+                       user: User = Depends(check_jwt), Authorization: str = Header()) -> UpdateScoreSchema:
     """Update match score"""
     await MatchRepository().update_one(record_id=id, data={"score": match_score.score})
     return match_score
 
 
 @grid_router.patch("/game/{id}")
-async def update_game(id: uuid.UUID, game_score: UpdateScoreSchema) -> UpdateScoreSchema:
+async def update_game(id: uuid.UUID, game_score: UpdateScoreSchema,
+                      user: User = Depends(check_jwt), Authorization: str = Header()) -> UpdateScoreSchema:
     """Update game score"""
     await GameRepository().update_one(record_id=id, data={"score": game_score.score})
     return game_score
 
 
 @grid_router.get("/match/{id}/end")
-async def end_match(id: uuid.UUID) -> uuid.UUID:
+async def end_match(id: uuid.UUID,
+                    user: User = Depends(check_jwt), Authorization: str = Header()) -> uuid.UUID:
     # TODO: implement CIRCLE grid type
     """End match, move winner on"""
     _match = await MatchRepository().get(record_id=id)
@@ -109,8 +116,10 @@ async def end_match(id: uuid.UUID) -> uuid.UUID:
     await MatchRepository().update_one(record_id=next_match.id, data={"players_id": players_id})
     return winner_id
 
+
 @grid_router.get("/results/{tournament_id}")
-async def get_results(tournament_id: uuid.UUID):
+async def get_results(tournament_id: uuid.UUID,
+                      user: User = Depends(check_jwt), Authorization: str = Header()):
     tournament = await TournamentRepository().get(record_id=tournament_id)
     grid_id = tournament.grid
     players_id = tournament.players_id
@@ -133,11 +142,12 @@ async def get_results(tournament_id: uuid.UUID):
 
     return res
 
+
 @grid_router.patch("round/{round_id}/set_game_count")
-async def set_game_count(round_id: uuid.UUID, game_count: SetGameCountSchema):
+async def set_game_count(round_id: uuid.UUID, game_count: SetGameCountSchema,
+                         user: User = Depends(check_jwt), Authorization: str = Header()):
     _round = await RoundRepository().get(record_id=round_id)
     if not _round:
         raise HTTPException(status_code=400, detail="Round doesn't exist.")
     await RoundRepository.update_one(record_id=round_id, data={"game_count": game_count.game_count})
     return "ok"
-
