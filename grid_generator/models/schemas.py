@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from tournaments.models.schemas import BriefUserSchema
 from tournaments.models.utils import GridTypeENUM
 
 
@@ -52,7 +53,7 @@ class GridSchemaWrapped(BaseModel):
 
 
 class PlayerResultSchema(BaseModel):
-    player: GridUserSchema
+    player: BriefUserSchema
     place: str
 
 
