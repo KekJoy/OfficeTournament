@@ -8,6 +8,7 @@ from grid_generator.repository import RoundRepository, MatchRepository, GameRepo
 from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema, \
     WrappedMatchSchema, GameSchema, UpdateScoreSchema, SetGameCountSchema, ResultsSchema
 from grid_generator.services.results import get_next_match, update_next_match, get_update_winner, get_match_results
+from tournaments.models.schemas import BriefUserSchema
 from tournaments.models.utils import TournamentStatusENUM
 from tournaments.repository import TournamentRepository, GridRepository
 from utils.dict import get_users_dict, to_dict_list
@@ -21,6 +22,8 @@ async def get_grid(tournament_id: uuid.UUID,
                    user: User = Depends(check_jwt), Authorization: str = Header()) -> GridSchemaWrapped:
     """Get grid data"""
     tournament = await TournamentRepository().get(record_id=tournament_id)
+    if tournament.status != TournamentStatusENUM.PROGRESS:
+        raise HTTPException(status_code=400, detail='The tournament has not begun yet')
     grid_id = tournament.grid
     _grid = await GridRepository().get(record_id=grid_id)
     users = await get_users_dict(tournament.players_id)
@@ -126,12 +129,11 @@ async def end_match(id: uuid.UUID,
 async def get_results(tournament_id: uuid.UUID,
                       user: User = Depends(check_jwt), Authorization: str = Header()) -> ResultsSchema:
     tournament = await TournamentRepository().get(record_id=tournament_id)
-    await TournamentRepository().update_one(record_id=tournament.id, data={"status": TournamentStatusENUM.COMPLETED})
 
     grid_id = tournament.grid
     players_id = tournament.players_id
     grid = await GridRepository().get(record_id=grid_id)
-    players = await get_users_dict(tournament.players_id)
+    players = await get_users_dict(tournament.players_id, BriefUserSchema)
 
     worst = len(players_id)
     res = []
