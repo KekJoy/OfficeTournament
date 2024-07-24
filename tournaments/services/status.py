@@ -14,7 +14,7 @@ async def set_tournament_status(id: uuid.UUID, status: TS, allowed_statuses: set
     await TournamentRepository().update_one(record_id=id, data={"status": status})
 
 
-@tournament_router.post("/{id}/open-enroll")
+@tournament_router.patch("/{id}/open-enroll")
 async def open_enroll(id: uuid.UUID):
     await set_tournament_status(id,
                                 TS.REGISTRATION_OPEN,
@@ -23,7 +23,7 @@ async def open_enroll(id: uuid.UUID):
     return "ok"
 
 
-@tournament_router.post("/{id}/close-enroll")
+@tournament_router.patch("/{id}/close-enroll")
 async def close_enroll(id: uuid.UUID):
     await set_tournament_status(id,
                                 TS.REGISTRATION_CLOSE,
@@ -32,7 +32,7 @@ async def close_enroll(id: uuid.UUID):
     return "ok"
 
 
-@tournament_router.post("/{id}/cancel")
+@tournament_router.patch("/{id}/cancel")
 async def cancel(id: uuid.UUID):
     await set_tournament_status(id, TS.CANCELED, None)
     return "ok"
