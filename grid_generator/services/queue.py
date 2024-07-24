@@ -28,6 +28,6 @@ async def get_queue(tournament_id: uuid.UUID) -> QueueSchema:
         matches = await MatchRepository().find_all(conditions={"round_id": _round.id})
         for _match in matches:
             match_dict = _match.__dict__
-            match_dict["players"] = [players[_id] for _id in match_dict["players_id"]]
+            match_dict["players"] = [players.get(_id) for _id in match_dict["players_id"]]
             res[match_dict["queue_match_number"]] = BasicMatchSchema(**match_dict)
     return QueueSchema(matches=[x for x in res if x])
