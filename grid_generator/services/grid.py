@@ -66,7 +66,7 @@ async def get_match(id: uuid.UUID,
         games.append(GameSchema(**game.__dict__))
 
     base = BasicMatchSchema(**_match.__dict__, players=players)
-    res = MatchSchema(**base.__dict__, games=games)
+    res = MatchSchema(**base.__dict__, games=sorted(games, key=lambda g: g.id))
 
     return WrappedMatchSchema(match=res)
 
