@@ -111,6 +111,8 @@ async def start_tournament(id: uuid.UUID, user: User = Depends(check_jwt), Autho
     tournament = await TournamentRepository().get(record_id=id)
     if tournament.admins_id[0] != user.id:
         raise HTTPException(status_code=403, detail="You are not the owner of the tournament.")
+    if len(tournament.players_id) != tournament.teams_limit:
+        raise HTTPException(status_code=400, detail="The number of enrolled players doesn't match the preset")
     await TournamentRepository().update_one(record_id=id, data={"status": TournamentStatusENUM.PROGRESS})
     await start(tournament.__dict__)
 
