@@ -144,7 +144,8 @@ async def get_results(tournament_id: uuid.UUID) -> ResultsSchema:
 
     return ResultsSchema(results=res)
 
-@grid_router.patch("round/{round_id}/set_game_count")
+
+@grid_router.patch("/round/{round_id}/set_game_count")
 async def set_game_count(round_id: uuid.UUID, game_count: SetGameCountSchema):
     _round = await RoundRepository().get(record_id=round_id)
     if not _round:
