@@ -3,6 +3,7 @@ import uuid
 from math import log2
 
 from grid_generator.repository import RoundRepository, MatchRepository
+from grid_generator.services.results import get_match_results
 
 
 class PlayoffCreator:
@@ -43,3 +44,25 @@ class PlayoffCreator:
 
 async def create_playoff(players: list[uuid.UUID], grid_id: uuid.UUID):
     return await PlayoffCreator(players, grid_id).create()
+
+
+async def get_playoff_results(grid, rounds, players):
+    worst = len(players.keys())
+    res = []
+    for _round in rounds:
+        if _round.round_number == 0:
+            continue
+
+        matches = await MatchRepository().find_all(conditions={'round_id': _round.id})
+        best = worst - len(matches) + 1
+        range_place = f"{best} — {worst}"
+        worst -= len(matches)
+
+        if best == 2:
+            res += await get_match_results(matches[0], players, "2", "1")
+        elif best == 3 and grid.third_place_match:
+            _match = rounds[0]
+            res += await get_match_results(_match, players, "4", "3")
+        else:
+            res += [await get_match_results(_match, players, range_place) for _match in matches]
+    return res
