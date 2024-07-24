@@ -10,7 +10,7 @@ from .circle import create_circle
 
 async def get_matches_by_grid_type(players, grid):
     if grid.grid_type == GridTypeENUM.PLAYOFF:
-        return await create_playoff(players, grid.id)
+        return await create_playoff(players, grid.id, grid.third_place_match)
     elif grid.grid_type == GridTypeENUM.CIRCLE:
         return await create_circle(players, grid.id)
     else:
