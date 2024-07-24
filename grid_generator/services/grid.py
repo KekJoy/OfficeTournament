@@ -21,6 +21,8 @@ async def get_grid(tournament_id: uuid.UUID,
                    user: User = Depends(check_jwt), Authorization: str = Header()) -> GridSchemaWrapped:
     """Get grid data"""
     tournament = await TournamentRepository().get(record_id=tournament_id)
+    if tournament.status != TournamentStatusENUM.PROGRESS:
+        raise HTTPException(status_code=400, detail='The tournament has not begun yet')
     grid_id = tournament.grid
     _grid = await GridRepository().get(record_id=grid_id)
     users = await get_users_dict(tournament.players_id)
@@ -126,7 +128,6 @@ async def end_match(id: uuid.UUID,
 async def get_results(tournament_id: uuid.UUID,
                       user: User = Depends(check_jwt), Authorization: str = Header()) -> ResultsSchema:
     tournament = await TournamentRepository().get(record_id=tournament_id)
-    await TournamentRepository().update_one(record_id=tournament.id, data={"status": TournamentStatusENUM.COMPLETED})
 
     grid_id = tournament.grid
     players_id = tournament.players_id
