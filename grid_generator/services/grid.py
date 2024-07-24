@@ -6,6 +6,7 @@ from grid_generator.repository import RoundRepository, MatchRepository, GameRepo
 from grid_generator.models.schemas import RoundSchema, BasicMatchSchema, GridSchema, GridSchemaWrapped, MatchSchema, \
     WrappedMatchSchema, GameSchema, UpdateScoreSchema, SetGameCountSchema, ResultsSchema
 from grid_generator.services.results import get_next_match, update_next_match, get_update_winner, get_match_results
+from tournaments.models.utils import TournamentStatusENUM
 from tournaments.repository import TournamentRepository, GridRepository
 from utils.dict import get_users_dict, to_dict_list
 
@@ -113,9 +114,11 @@ async def end_match(id: uuid.UUID) -> uuid.UUID:
     return winner_id
 
 
-@grid_router.get("/results/{tournament_id}")
+@grid_router.get("/{tournament_id}/results")
 async def get_results(tournament_id: uuid.UUID) -> ResultsSchema:
     tournament = await TournamentRepository().get(record_id=tournament_id)
+    await TournamentRepository().update_one(record_id=tournament.id, data={"status": TournamentStatusENUM.COMPLETED})
+
     grid_id = tournament.grid
     players_id = tournament.players_id
     grid = await GridRepository().get(record_id=grid_id)
@@ -144,7 +147,8 @@ async def get_results(tournament_id: uuid.UUID) -> ResultsSchema:
 
     return ResultsSchema(results=res)
 
-@grid_router.patch("round/{round_id}/set_game_count")
+
+@grid_router.patch("/round/{round_id}/set_game_count")
 async def set_game_count(round_id: uuid.UUID, game_count: SetGameCountSchema):
     _round = await RoundRepository().get(record_id=round_id)
     if not _round:

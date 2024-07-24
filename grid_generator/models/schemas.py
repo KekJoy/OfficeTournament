@@ -62,3 +62,7 @@ class ResultsSchema(BaseModel):
 
 class SetGameCountSchema(BaseModel):
     game_count: int
+
+
+class QueueSchema(BaseModel):
+    matches: List[BasicMatchSchema]
