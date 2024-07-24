@@ -113,7 +113,7 @@ async def end_match(id: uuid.UUID) -> uuid.UUID:
     return winner_id
 
 
-@grid_router.get("/results/{tournament_id}")
+@grid_router.get("/{tournament_id}/results")
 async def get_results(tournament_id: uuid.UUID) -> ResultsSchema:
     tournament = await TournamentRepository().get(record_id=tournament_id)
     grid_id = tournament.grid
