@@ -153,7 +153,7 @@ async def patch_tournament(id: uuid.UUID, tournament: PatchTournamentSchema,
 
 
 @tournament_router.post("/user_tournaments", response_model=TournamentResponse)
-async def get_user_tournaments(user: User = Depends(check_jwt),
+async def get_user_tournaments(filters: TournamentFiltersSchema, user: User = Depends(check_jwt),
                                Authorization: Annotated[list[str] | None, Header()] = None,
                                page: int = Query(ge=1, default=1),
                                size: int = Query(ge=1, le=100)) -> TournamentResponse:
@@ -161,7 +161,7 @@ async def get_user_tournaments(user: User = Depends(check_jwt),
     offset_min = (page - 1) * size
     offset_max = page * size
 
-    tournaments = await TournamentRepository().find_user_tournaments(user.id)
+    tournaments = await TournamentRepository().find_user_tournaments(user.id, filters=filters.model_dump())
 
     sports_list = await SportRepository().get([t.sport_id for t in tournaments])
     sports = get_id_dict(sports_list)

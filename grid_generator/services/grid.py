@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 
 from auth.jwt_checker import check_jwt
 from auth.models.db import User
