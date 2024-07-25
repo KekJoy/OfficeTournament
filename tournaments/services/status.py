@@ -44,7 +44,7 @@ async def cancel(id: uuid.UUID, user: User = Depends(check_jwt), Authorization: 
     return "ok"
 
 
-@tournament_router.patch("/id/end")
+@tournament_router.patch("/{id}/end")
 async def end(id: uuid.UUID, user: User = Depends(check_jwt), Authorization: str = Header()):
     await set_tournament_status(id, user, TS.COMPLETED, {TS.PROGRESS}, msg="Cannot end the tournament")
     return "ok"
