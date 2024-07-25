@@ -10,8 +10,6 @@ services:
       - POSTGRES_DB=postgres
     ports:
       - "5432:5432"
-    networks:
-      - custom
 
   backend:
     container_name: "backend"
@@ -21,8 +19,6 @@ services:
       - .env
     depends_on:
       - db
-    networks:
-      - custom
     ports:
       - "8000:8000"
     command: >
