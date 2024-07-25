@@ -127,8 +127,8 @@ async def end_match(id: uuid.UUID,
 
 
 @grid_router.get("/{tournament_id}/results")
-async def get_results(tournament_id: uuid.UUID,
-                      user: User = Depends(check_jwt), Authorization: str = Header()) -> ResultsSchema:
+async def get_results(tournament_id: uuid.UUID
+                      ) -> ResultsSchema:
     tournament = await TournamentRepository().get(record_id=tournament_id)
 
     grid_id = tournament.grid
