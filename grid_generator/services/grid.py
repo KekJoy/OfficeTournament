@@ -55,7 +55,7 @@ async def get_match(id: uuid.UUID,
     _games = await GameRepository().find_all(conditions={'match_id': _match.id}) or []
 
     _players = await get_users_dict(_match.players_id)
-    players = list(_players.values())
+    players = [_players.get(p) for p in _match.players_id]
 
     games = []
     for i in _games:
