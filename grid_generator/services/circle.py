@@ -43,7 +43,7 @@ async def create_circle(shuffled_players: list[uuid.UUID], grid_id: uuid.UUID) -
             _match = await MatchRepository().add_round_match(
                 round_id=round_id,
                 grid_number=current_match_number,
-                queue_number=get_queue_number[(i, j)],
+                queue_number=get_queue_number[(i, j)] if players_count >= 4 else current_match_number,
                 players=match_players)
             matches.append(_match)
             current_match_number += 1
