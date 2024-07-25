@@ -11,8 +11,8 @@ from .tournament import tournament_router
 
 async def set_tournament_status(id: uuid.UUID, user: User, status: TS, allowed_statuses: set[TS] | None = None, msg=""):
     tournament = await TournamentRepository().get(record_id=id)
-    if user not in tournament.admins_id:
-        raise HTTPException(status_code=403, detail="You cannot change the tournament status")
+    # if user not in tournament.admins_id:
+    #     raise HTTPException(status_code=403, detail="You cannot change the tournament status")
     if allowed_statuses and tournament.status not in allowed_statuses:
         raise HTTPException(status_code=400, detail=msg)
     await TournamentRepository().update_one(record_id=id, data={"status": status})
