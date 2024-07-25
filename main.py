@@ -11,15 +11,6 @@ from tournaments.services.user_actions import user_actions
 
 app = FastAPI(title="Office Tournament")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost", "http://80.87.193.173", "https://80.87.193.173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 @app.post("/")
 async def root():
     return {"message": "Hello World"}
@@ -30,3 +21,12 @@ app.include_router(sport_router, tags=['Sport'])
 app.include_router(grid_router, tags=['Grids'])
 app.include_router(user_router, tags=['User Profile'])
 app.include_router(user_actions, tags=["User Actions"])
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost", "http://80.87.193.173", "https://80.87.193.173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
