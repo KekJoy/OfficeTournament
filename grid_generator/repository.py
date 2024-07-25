@@ -19,11 +19,11 @@ class RoundRepository(SQLALchemyRepository):
 class MatchRepository(SQLALchemyRepository):
     model = Match
 
-    def add_round_match(self, round_id, number=0, players=None):
+    def add_round_match(self, round_id, grid_number=0, queue_number=0, players=None):
         players = players or [None, None]
         return self.add_one(data={
-            "grid_match_number": number,
-            "queue_match_number": number,
+            "grid_match_number": grid_number,
+            "queue_match_number": queue_number,
             "round_id": round_id,
             "players_id": players,
             "score": [0, 0]
