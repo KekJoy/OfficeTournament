@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
 from auth.service import auth_router
@@ -9,7 +10,19 @@ from tournaments.services.sport import sport_router
 from tournaments.services.tournament import tournament_router
 from tournaments.services.user_actions import user_actions
 
-app = FastAPI(title="Office Tournament")
+
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*']
+    )
+]
+
+app = FastAPI(title="Office Tournament", middleware=middleware)
+
 
 @app.post("/")
 async def root():
@@ -22,12 +35,3 @@ app.include_router(grid_router, tags=['Grids'])
 app.include_router(user_router, tags=['User Profile'])
 app.include_router(user_actions, tags=["User Actions"])
 
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost", "http://80.87.193.173", "https://80.87.193.173", "null", "*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
