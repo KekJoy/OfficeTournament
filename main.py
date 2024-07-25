@@ -21,10 +21,10 @@ middleware = [
     )
 ]
 
-app = FastAPI(title="Office Tournament", middleware=middleware)
+app = FastAPI(title="Office Tournament", middleware=middleware, root_path="/api")
 
 
-@app.post("/")
+@app.post("/say")
 async def root():
     return {"message": "Hello World"}
 

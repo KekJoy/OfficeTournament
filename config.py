@@ -16,15 +16,18 @@ class Settings(BaseSettings):
     JWT_ACCESS_TTL: int
     JWT_REFRESH_TTL: int
 
-    ORIGINS: List[str] = ["*"]
+    ORIGINS: List[str] = []
 
     model_config = SettingsConfigDict(env_file=".env")
 
+
 settings = Settings()
+
 
 class AppSettings:
     DEFAULT_GAME_COUNT = 3
 
     DEFAULT_MAX_TEAMS_COUNT = 16
+
 
 app_settings = AppSettings()
