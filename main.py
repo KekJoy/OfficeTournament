@@ -25,7 +25,7 @@ middleware = [
     )
 ]
 
-app = FastAPI(title="Office Tournament", middleware=middleware, root_path="/api")
+app = FastAPI(title="Office Tournament", middleware=middleware)
 
 
 @app.post("/say")
