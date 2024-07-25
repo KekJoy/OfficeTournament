@@ -25,8 +25,9 @@ app.include_router(user_actions, tags=["User Actions"])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://80.87.193.173", "https://80.87.193.173"],
+    allow_origins=["http://localhost", "http://80.87.193.173", "https://80.87.193.173", "null", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
