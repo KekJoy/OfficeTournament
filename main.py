@@ -11,10 +11,14 @@ from tournaments.services.tournament import tournament_router
 from tournaments.services.user_actions import user_actions
 
 
+origins = [
+    "http://45.153.231.50"
+]
+
 middleware = [
     Middleware(
         CORSMiddleware,
-        allow_origins=['*'],
+        allow_origins=origins,
         allow_credentials=True,
         allow_methods=['*'],
         allow_headers=['*']
